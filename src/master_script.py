@@ -215,6 +215,38 @@ def create_analyzer_cfg_p835(cfg, template_path, out_path):
         file.close()
     print(f"  [{out_path}] is created")
 
+def create_analyzer_cfg_attribution(cfg, template_path, out_path):
+    """
+    create cfg file to be used by analyzer script (p835 method)
+    :param cfg:
+    :param template_path:
+    :param out_path:
+    :return:
+    """
+    print("Start creating config file for result_parser")
+    config = {}
+
+    config['q_num'] = int(cfg['create_input']['number_of_clips_per_session']) + \
+                      int(cfg['create_input']['number_of_trapping_per_session']) + \
+                      int(cfg['create_input']['number_of_gold_clips_per_session'])
+
+    config['max_allowed_hits'] = cfg['p835_html']['allowed_max_hit_in_project']
+
+    config['quantity_hits_more_than'] = cfg['p835_html']['quantity_hits_more_than']
+    config['quantity_bonus'] = cfg['p835_html']['quantity_bonus']
+    config['quality_top_percentage'] = cfg['p835_html']['quality_top_percentage']
+    config['quality_bonus'] = cfg['p835_html']['quality_bonus']
+
+    with open(template_path, 'r') as file:
+        content = file.read()
+        file.seek(0)
+    t = Template(content)
+    cfg_file = t.render(cfg=config)
+
+    with open(out_path, 'w') as file:
+        file.write(cfg_file)
+        file.close()
+    print(f"  [{out_path}] is created")
 
 def create_analyzer_cfg_dcr_ccr(cfg, template_path, out_path):
     """
@@ -386,6 +418,80 @@ async def create_hit_app_acr(cfg, template_path, out_path, training_path, trap_p
     print(f"  [{out_path}] is created")
 
 
+async def create_hit_app_attribution(cfg, template_path, out_path, training_path, trap_path, cfg_g, cfg_trapping_store):
+    """
+    Create the p835.html file corresponding to this project
+    :param cfg:
+    :param template_path:
+    :param out_path:
+    :return:
+    """
+    print("Start creating custom p835.html")
+    df_trap = pd.DataFrame()
+    if trap_path and os.path.exists(trap_path):
+        df_trap = pd.read_csv(trap_path, nrows=1)
+    else:
+        trapclipsstore = TrappingSamplesInStore(cfg_trapping_store, 'TrappingQuestions')
+        df_trap = await trapclipsstore.get_dataframe()
+    # trapping clips are required, at list 1 clip should be available here
+    if len(df_trap.index) < 1 and int(cfg_g['number_of_clips_per_session']) > 0:
+        raise (f"At least one trapping clip is required")
+    for index, row in df_trap.head(n=1).iterrows():
+        trap_url = row['trapping_clips']
+        trap_ans = row['trapping_ans']
+
+    config = {}
+    config['cookie_name'] = cfg['cookie_name']
+    config['qual_cookie_name'] = cfg['qual_cookie_name']
+    config['allowed_max_hit_in_project'] = cfg['allowed_max_hit_in_project']
+    config['training_trap_urls'] = trap_url
+    config['training_trap_ans'] = trap_ans
+
+    config['hit_base_payment'] = cfg['hit_base_payment']
+    config['quantity_hits_more_than'] = cfg['quantity_hits_more_than']
+    config['quantity_bonus'] = cfg['quantity_bonus']
+    config['quality_top_percentage'] = cfg['quality_top_percentage']
+    config['quality_bonus'] = float(cfg['quality_bonus']) + float(cfg['quantity_bonus'])
+    config['sum_quantity'] = float(cfg['quantity_bonus']) + float(cfg['hit_base_payment'])
+    config['sum_quality'] = config['quality_bonus'] + float(cfg['hit_base_payment'])
+
+    df_train = pd.read_csv(training_path)
+    train = []
+    for index, row in df_train.iterrows():
+        train.append(row['training_clips'])
+    train.append(trap_url)
+    config['training_urls'] = train
+
+    # rating urls
+    rating_urls = []
+    n_clips = int(cfg_g['number_of_clips_per_session'])
+    n_traps = int(cfg_g['number_of_trapping_per_session'])
+    n_gold_clips = int(cfg_g['number_of_gold_clips_per_session'])
+
+    for i in range(0, n_clips ):
+        rating_urls.append('${Q'+str(i)+'}')
+    if n_traps > 1:
+        raise Exception("more than 1 trapping clips question is not supported.")
+    if n_traps == 1:
+        rating_urls.append('${TP}')
+
+    if  n_gold_clips > 1:
+        raise Exception("more than 1 gold question is not supported.")
+    if n_gold_clips == 1:
+        rating_urls.append('${gold_clips}')
+
+    config['rating_urls'] = rating_urls
+
+    with open(template_path, 'r') as file:
+        content = file.read()
+        file.seek(0)
+    t = Template(content)
+    html = t.render(cfg=config)
+
+    with open(out_path, 'w') as file:
+        file.write(html)
+    print(f"  [{out_path}] is created")
+
 async def create_hit_app_p835(cfg, template_path, out_path, training_path, trap_path, cfg_g, cfg_trapping_store):
     """
     Create the p835.html file corresponding to this project
@@ -556,6 +662,11 @@ async def main(cfg, test_method, args):
     p831_dcr_cfg_template_path = os.path.join(os.path.dirname(__file__),
                                           'assets_master_script/dcr_ccr_result_parser_template.cfg')
 
+    # for attribution
+    attribution_template_path = os.path.join(os.path.dirname(__file__), 'P808Template/attribution_template.html')
+    attribution_cfg_template_path = os.path.join(os.path.dirname(__file__),
+                                          'assets_master_script/acr_result_parser_template.cfg')
+
     is_p831 = args.p831
     template_path = ''
 
@@ -579,6 +690,11 @@ async def main(cfg, test_method, args):
         assert os.path.exists(p835_template_path), f"No html template file found  in {p835_template_path}"
         assert os.path.exists(p835_cfg_template_path), f"No cfg template  found  in {p835_cfg_template_path}"
         template_path = p835_template_path
+
+    if test_method == "attribution":
+        assert os.path.exists(attribution_template_path), f"No html template file found  in {attribution_template_path}"
+        assert os.path.exists(attribution_cfg_template_path), f"No cfg template  found  in {attribution_cfg_template_path}"
+        template_path = attribution_template_path
 
     if is_p831 and test_method == "acr":
         assert os.path.exists(p831_acr_template_path), f"No html template file found  in {p831_acr_template_path}"
@@ -620,6 +736,9 @@ async def main(cfg, test_method, args):
     elif test_method == 'p835':
         await create_hit_app_p835(cfg['p835_html'], template_path, output_html_file, args.training_clips,
                                  args.trapping_clips, cfg['create_input'], cfg['TrappingQuestions'])
+    elif test_method == 'attribution':
+        await create_hit_app_attribution(cfg['attribution_html'], template_path, output_html_file, args.training_clips,
+                                 args.trapping_clips, cfg['create_input'], cfg['TrappingQuestions'])
     else:
         await create_hit_app_ccr_dcr(cfg['dcr_ccr_html'], template_path, output_html_file, args.training_clips,
                                cfg['create_input'])
@@ -635,6 +754,8 @@ async def main(cfg, test_method, args):
         create_analyzer_cfg_acr(cfg, acr_cfg_template_path, output_cfg_file)
     elif test_method == 'p835':
         create_analyzer_cfg_p835(cfg, p835_cfg_template_path, output_cfg_file)
+    elif test_method == 'attribution':
+        create_analyzer_cfg_attribution(cfg, p835_cfg_template_path, output_cfg_file)
     else:
         create_analyzer_cfg_dcr_ccr(cfg, dcr_ccr_cfg_template_path, output_cfg_file)
 
@@ -657,7 +778,7 @@ if __name__ == '__main__':
     # check input arguments
     args = parser.parse_args()
 
-    methods = ['acr', 'dcr', 'ccr', 'p835']
+    methods = ['acr', 'dcr', 'ccr', 'p835', 'attribution']
     test_method = args.method.lower()
     assert test_method in methods, f"No such a method supported, please select between 'acr', 'dcr', 'ccr', 'p835'"
 
@@ -679,7 +800,7 @@ if __name__ == '__main__':
     else:
         assert True, "Neither clips file not cloud store provided for rating clips"
 
-    if test_method in ['acr', 'p835']:
+    if test_method in ['acr', 'p835', 'attribution']:
         if args.gold_clips:
             assert os.path.exists(args.gold_clips), f"No csv file containing gold clips in {args.gold_clips}"
         elif cfg.has_option('GoldenSample', 'Path'):

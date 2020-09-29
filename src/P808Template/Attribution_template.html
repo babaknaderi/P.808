@@ -10,6 +10,7 @@
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+		<script src="https://drive.google.com/uc?export=download&id=1brh6pYbpLyPu3Oh4pC6w2sumkkMUPIOd"></script>
 	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
 	<meta content="utf-8">
 </head>
@@ -73,6 +74,8 @@ General configuration file:
  - allowedMaxContinuesSessionDurationInMinutes: how log is the maximum continue session. A break of 10min will be forced
 
 */
+//questionUrls: {{cfg.rating_urls}},
+    //trainingUrls: {{cfg.training_urls}},
 var config ={
 	cookieName:"{{cfg.cookie_name}}",
 	qualificationCookieName:"{{cfg.qual_cookie_name}}",
@@ -80,8 +83,17 @@ var config ={
     forceRetrainingInHours:1,
     showSetupEveryMinutes:30,
     debug:"true",
-    questionUrls: {{cfg.rating_urls}},
-    trainingUrls: {{cfg.training_urls}},
+
+    questionUrls: ['https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c01_ef03_s001.wav',
+    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c04_em02_s002.wav',
+    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c05_ef02_s004.wav',
+    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/tps/D401_c49_ef11_4.wav'],
+
+    trainingUrls: ['https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c24_ef03_s001.wav',
+    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c04_em02_s002.wav',
+    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c05_ef02_s004.wav',
+    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c06_em01_s003.wav',
+    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/tps/D401_c49_ef11_4.wav'],
 
     knownQuestionInTrainingUrl:"{{cfg.training_trap_urls}}",
     knownQuestionInTrainingAns: "{{cfg.training_trap_ans}}",
@@ -91,7 +103,7 @@ var config ={
     goldClipAns:"${gold_clips_ans}",
     randomizeTrainingQuestions:"true",
     randomizeRatingQuestions:"true",
-    allowedMaxHITsInProject:{{cfg.allowed_max_hit_in_project}},
+    allowedMaxHITsInProject:20,
 	allowedMaxContinuesSessionDurationInMinutes:45,
 	qualification:{
 		mother_tongue: ["english","en"],
@@ -839,14 +851,63 @@ function shuffle(a) {
 	return a;
 }
 
+
+</script>
+<script>
+
+	// attribution
+	var attribution_scales =
+	[ {item_code : "RELA", left_label:"Relaxed", right_label:"Not relaxed"},
+	  {item_code : "CONF", left_label:"Confident", right_label:"Not confident"},
+	  {item_code : "ENTH", left_label:"Enthusiastic", right_label:"Unenthusiastic"},
+	  {item_code : "ENER", left_label:"Energetic", right_label:"Un-energetic"},
+	  {item_code : "FRIE", left_label:"Friendly", right_label:"Unfriendly"},
+	  {item_code : "ARRO", left_label:"Arrogant", right_label:"Not arrogant"},
+	  {item_code : "PLEA", left_label:"Pleasant", right_label:"Unpleasant"},
+	  {item_code : "LIKE", left_label:"Likeable", right_label:"Non-likeable"},
+	  {item_code : "RESP", left_label:"Responsible", right_label:"Irresponsible"},
+	  {item_code : "RELI", left_label:"Reliable", right_label:"Unreliable"},
+	  {item_code : "ACCE", left_label:"Accessible", right_label:"Inacceessible"},
+	  {item_code : "SYMP", left_label:"Sympathetic", right_label:"Unsympathetic"},
+	  {item_code : "SKIL", left_label:"Skilful", right_label:"Unskilful"},
+	  {item_code : "KIND", left_label:"Kind", right_label:"Unkind"},
+	  {item_code : "EXTR", left_label:"Extrovert", right_label:"Introvert"}
+
+
+	];
+	var tp_item_code ="";
+	var store_tp_item_code= '<input id="TP_ITEM_CODE" name="TP_ITEM_CODE"  type="hidden" value="{0}" />';
+
+	function prepare_tp_for_attribution(){
+		if (tp_item_code != "")
+			return;
+		tp_question = Object.assign({}, attribution_scales[Math.floor(Math.random() * attribution_scales.length)]);
+		tp_item_code = tp_question.item_code;
+		store_tp_item_code = store_tp_item_code.f(tp_item_code);
+		tp_question.item_code="TP";
+		attribution_scales.push(tp_question);
+		console.log("******"+tp_item_code)
+		//add the tp item code
+		$('#placeholder').append(store_tp_item_code);
+
+	}
+
 /*
 	Generate the training section
 */
 function generate_training_section(){
 	acr_nav_tab = '<li class="nav-item {1}"><a class="nav-link " data-toggle="tab"  href="#T{0}-panel" id="T{0}-tab " role="tab" aria-controls="T{0}" {2}>Q. {0}</a></li>';
-	acr_tab ='<div class="tab-pane fade {2}" id="T{0}-panel" role="tabpanel" aria-labelledby="T{0}-tab"><p></p><div class="row">	<div class="col-sm-3"></div>	<div class="col-sm-6">		<p style="margin-top:10px;">{0}. How do you rate the <b>overall quality</b> of the following speech sample? </p><p align="center"> <span class="baudio" id="t{0}" data-onfinished="playedAudioTraining" data-src="{1}" >&nbsp;</span> </p><fieldset id="fieldset_t{0}" class="trainingFieldset" title=""><table class="table md scale" cellspacing="0" cellpadding="0">			<thead><tr><th >Quality of the speech</th><th class="c" >Score</th></tr>			</thead>			<tbody><tr><td><div class="radio" ><label ><input type="radio" name="t{0}" value="5">Excellent</label></div></td><td class="c">5</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="t{0}" value="4">Good</label></div></td><td class="c">4</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="t{0}" value="3">Fair</label></div></td><td class="c">3</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="t{0}" value="2">Poor</label></div></td><td class="c">2</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="t{0}" value="1"required="">Bad</label></div></td><td class="c">1</td></tr>	   </tbody></table>		</fieldset><p></p> </div> 	<div class="col-sm-3"></div></div> <p></p> </div>';
+	acr_tab ='<div class="tab-pane fade {2}" id="T{0}-panel" role="tabpanel" aria-labelledby="T{0}-tab"> <p></p> <div class="row">	<div class="col-sm-3"></div>	<div class="col-sm-6">		<p style="margin-top:10px;">{0}. How do you rate the <b>overall quality</b> of the following speech sample? </p><p align="center"> <span class="baudio" id="t{0}" data-onfinished="playedAudioTraining" data-src="{1}" >&nbsp;</span> </p> <div id="fragebogen_screen_training_{0}"></div> <p></p> </div> 	<div class="col-sm-3"></div></div> <p></p> </div>';
 	// this will show which url was shown by in which question as their orther will be randomized
 	input_template= '<input id="T{0}_URL" name="T{0}_URL" type="hidden" value="{1}" />';
+	input_template_ans= '<input id="T{0}_{1}" name="T{0}_{1}"  type="hidden" value="-1" />';
+
+
+	// randomly select and add a TP question
+	prepare_tp_for_attribution();
+
+	// set the order of scale
+	attribution_scales = shuffle(attribution_scales);
 
     if (JSON.parse(config['randomizeTrainingQuestions']))
 		urls = shuffle(config['trainingUrls']);
@@ -854,6 +915,7 @@ function generate_training_section(){
 		urls = config['trainingUrls'];
 
 	var i;
+
 	for (i = 0; i < urls.length; i++) {
 		if (i==0){
 			$('#trainingTabs').append(acr_nav_tab.f(i+1,'active', 'ria-selected="true"'));
@@ -863,6 +925,45 @@ function generate_training_section(){
 			$('#nav-tabContent').append(acr_tab.f(i+1, urls[i],''));
 		}
 		$('#av-tabContent').append(input_template.f(i+1, urls[i]));
+		screen_element = document.getElementById("fragebogen_screen_training_{0}".f(i+1));
+		var questionnaireItems = [];
+		for (j = 0; j < attribution_scales.length; j++) {
+			item_name = "T{0}_{1}".f(i+1, attribution_scales[j].item_code);
+			item = new QuestionnaireItemSVGVisualAnalogueScale("max-width "+item_name, "", true, attribution_scales[j].left_label, attribution_scales[j].right_label);
+			screen_element.appendChild(item.createUI());
+			$("#fragebogen_screen_training_{0}".f(i+1)).append(input_template_ans.f(i+1, attribution_scales[j].item_code));
+            item.setEnabled(true);
+
+			f = function (item) {
+				let item_name = item.className.split(" ")[1];
+				myItem = document.getElementById(item_name);
+				oldValue=myItem.value;
+				myItem.value = item.getAnswer();
+				if (myItem.value==-1){
+					return;
+				}
+				if (item_name.endsWith("_TP") || item_name.includes(tp_item_code)){
+					question_name = item_name.split("_")[0];
+					if (item_name.endsWith("TP"))
+						other_item = document.getElementById(question_name+"_"+tp_item_code);
+					else
+					    other_item = document.getElementById(question_name+"_TP");
+					if (other_item.value !=- 1){
+						// check if the value match, margin 20% diff is accepted
+						if (Math.abs(other_item.value - myItem.value)> 120*.2 ){
+							// out of 20% range
+							alert("This item is repeated. Your answer this time is very different than the last time. Make sure to read each item carefully and be consistent.");
+							item.setAnswer(-1);
+							item.applyAnswerToUI();
+							myItem.value = -1;
+						}
+
+					}
+				}
+			};
+			item.setOnReadyStateChangedCallback(f);
+            questionnaireItems.push(item);
+		}
 	}
 	$('.question_number_training').html(urls.length);
 	trainingStimulusPlayed = new Array(urls.length).fill(0);
@@ -875,6 +976,8 @@ function generate_rating_section(){
 	acr_nav_tab = '<li class="nav-item {1}"><a class="nav-link" data-toggle="tab" href="#Q{0}-panel" id="Q{0}-tab" role="tab" aria-controls="Q{0}" {2}>Q. {0}</a></li>';
 	acr_tab ='<div class="tab-pane fade {2}" id="Q{0}-panel" role="tabpanel" aria-labelledby="q{0}-tab"> <p></p> <div class="row"> <div class="col-sm-3"></div> <div class="col-sm-6"> <p style="margin-top:10px;">{0}. How do you rate the <b>overall quality</b> of the following speech sample? </p> <p align="center"> <span class="baudio" id="q{0}" data-onfinished="playedAudioQ" data-src="{1}" >&nbsp;</span> </p> <fieldset id="fieldset_q{0}" title=""> <table class="table md scale" cellspacing="0" cellpadding="0"> <thead> <tr><th >Quality of the speech</th><th class="c" >Score</th></tr> </thead> <tbody> <tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="5">Excellent</label></div></td><td class="c">5</td></tr> <tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="4">Good</label></div></td><td class="c">4</td></tr> <tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="3">Fair</label></div></td><td class="c">3</td></tr> <tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="2">Poor</label></div></td><td class="c">2</td></tr> <tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="1"required="">Bad</label></div></td><td class="c">1</td></tr> </tbody> </table> </fieldset> <p></p> </div> <div class="col-sm-3"></div> </div> <p></p> </div>';
 	// this will show which url was shown by in which question as their orther will be randomized
+
+
 	input_template= '<input id="Q{0}_URL" name="Q{0}_URL" type="hidden" value="{1}" />';
 	if (JSON.parse(config['randomizeRatingQuestions'])){
 		urls = shuffle(config['questionUrls']);
@@ -896,6 +999,7 @@ function generate_rating_section(){
 	$('.question_number').html(urls.length);
 
 }
+
 </script>
 
 <!--    Error -->
@@ -1348,6 +1452,7 @@ function generate_rating_section(){
 				<h3 class="panel-title">Ratings</h3>
 			</div>
 			<div class="panel-body">
+				<div id="placeholder"> </div>
 				<p> Please answer the following <b class="question_number"> 0 </b> questions. For each question, please listen to the audio sample and give your opinion about the quality of the speech you hear on the following scale. <b>Note</b> that the scale will be activated when the speech sample played until the end. In case you hear an interruption message, please follow the instruction given in the message.</p>
 				<p> There is no right or wrong answer as long as you listen to the audio files and give your opinion.</p>
 

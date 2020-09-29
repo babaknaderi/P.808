@@ -40,6 +40,10 @@ If you use this tool in your research please cite it with the following referenc
 }
 ```
 
+## Update
+* Including `attribution` method, integrating [TheFragebogen](https://thefragebogen.de/). 
+
+
 ## Getting Started
 * [Preparation](docs/preparation.md)
 * [Running the Test on Amazon Mechanical Turk](docs/running_test_mturk.md)
