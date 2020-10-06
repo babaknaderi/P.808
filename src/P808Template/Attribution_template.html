@@ -85,15 +85,9 @@ var config ={
     debug:"true",
 
     questionUrls: ['https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c01_ef03_s001.wav',
-    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c04_em02_s002.wav',
-    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c05_ef02_s004.wav',
-    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/tps/D401_c49_ef11_4.wav'],
+    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c04_em02_s002.wav'],
 
-    trainingUrls: ['https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c24_ef03_s001.wav',
-    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c04_em02_s002.wav',
-    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c05_ef02_s004.wav',
-    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c06_em01_s003.wav',
-    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/tps/D401_c49_ef11_4.wav'],
+    trainingUrls: ['https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c24_ef03_s001.wav'],
 
     knownQuestionInTrainingUrl:"{{cfg.training_trap_urls}}",
     knownQuestionInTrainingAns: "{{cfg.training_trap_ans}}",
@@ -153,7 +147,7 @@ $(function() {
 			$('.trainingFieldset').prop("disabled", true);
 			$("#training").hide();
 			$("#training :input").removeAttr("required");
-			$('#instruction').collapse()
+			$('#instruction').collapse();
 			cookie_debug_status=cookie_debug_status+"Train Exist*";
 		}
 		// given cookie availability disable the setup
@@ -856,6 +850,11 @@ function shuffle(a) {
 <script>
 
 	// attribution
+/*	var attribution_scales =
+	[ {item_code : "RELA", left_label:"Relaxed", right_label:"Not relaxed"},
+	  {item_code : "CONF", left_label:"Confident", right_label:"Not confident"}
+	];
+*/
 	var attribution_scales =
 	[ {item_code : "RELA", left_label:"Relaxed", right_label:"Not relaxed"},
 	  {item_code : "CONF", left_label:"Confident", right_label:"Not confident"},
@@ -872,9 +871,9 @@ function shuffle(a) {
 	  {item_code : "SKIL", left_label:"Skilful", right_label:"Unskilful"},
 	  {item_code : "KIND", left_label:"Kind", right_label:"Unkind"},
 	  {item_code : "EXTR", left_label:"Extrovert", right_label:"Introvert"}
-
-
 	];
+
+	var tp_diff_percentage_accepted= 0.1;
 	var tp_item_code ="";
 	var store_tp_item_code= '<input id="TP_ITEM_CODE" name="TP_ITEM_CODE"  type="hidden" value="{0}" />';
 
@@ -897,7 +896,7 @@ function shuffle(a) {
 */
 function generate_training_section(){
 	acr_nav_tab = '<li class="nav-item {1}"><a class="nav-link " data-toggle="tab"  href="#T{0}-panel" id="T{0}-tab " role="tab" aria-controls="T{0}" {2}>Q. {0}</a></li>';
-	acr_tab ='<div class="tab-pane fade {2}" id="T{0}-panel" role="tabpanel" aria-labelledby="T{0}-tab"> <p></p> <div class="row">	<div class="col-sm-3"></div>	<div class="col-sm-6">		<p style="margin-top:10px;">{0}. How do you rate the <b>overall quality</b> of the following speech sample? </p><p align="center"> <span class="baudio" id="t{0}" data-onfinished="playedAudioTraining" data-src="{1}" >&nbsp;</span> </p> <div id="fragebogen_screen_training_{0}"></div> <p></p> </div> 	<div class="col-sm-3"></div></div> <p></p> </div>';
+	acr_tab ='<div class="tab-pane fade {2}" id="T{0}-panel" role="tabpanel" aria-labelledby="T{0}-tab"> <p></p> <div class="row">	<div class="col-sm-1"></div>	<div class="col-sm-10">		<p style="margin-top:10px;text-align: center;">{0}. Listen to the following speech file, and specify <b>your impression of the voice</b> on below scales? </p><p align="center"> <span class="baudio" id="t{0}" data-onfinished="playedAudioTraining" data-src="{1}" >&nbsp;</span> </p> <div id="fragebogen_screen_training_{0}"></div> <p></p> </div> 	<div class="col-sm-1"></div></div> <p></p> </div>';
 	// this will show which url was shown by in which question as their orther will be randomized
 	input_template= '<input id="T{0}_URL" name="T{0}_URL" type="hidden" value="{1}" />';
 	input_template_ans= '<input id="T{0}_{1}" name="T{0}_{1}"  type="hidden" value="-1" />';
@@ -929,13 +928,16 @@ function generate_training_section(){
 		var questionnaireItems = [];
 		for (j = 0; j < attribution_scales.length; j++) {
 			item_name = "T{0}_{1}".f(i+1, attribution_scales[j].item_code);
-			item = new QuestionnaireItemSVGVisualAnalogueScale("max-width "+item_name, "", true, attribution_scales[j].left_label, attribution_scales[j].right_label);
+			item = new QuestionnaireItemSVGVisualAnalogueScale("max-width "+item_name, "", false, attribution_scales[j].left_label, attribution_scales[j].right_label);
 			screen_element.appendChild(item.createUI());
-			$("#fragebogen_screen_training_{0}".f(i+1)).append(input_template_ans.f(i+1, attribution_scales[j].item_code));
+			$("#thefragebogen_hidden_inputs".f(i+1)).append(input_template_ans.f(i+1, attribution_scales[j].item_code));
             item.setEnabled(true);
 
 			f = function (item) {
+				if (item.getAnswer()==null)
+					return;
 				let item_name = item.className.split(" ")[1];
+				console.log("item_name:"+ item_name);
 				myItem = document.getElementById(item_name);
 				oldValue=myItem.value;
 				myItem.value = item.getAnswer();
@@ -948,12 +950,13 @@ function generate_training_section(){
 						other_item = document.getElementById(question_name+"_"+tp_item_code);
 					else
 					    other_item = document.getElementById(question_name+"_TP");
-					if (other_item.value !=- 1){
+					console.log ("other item value:"+ other_item.value )
+					if (other_item.value !=- 1 &&  other_item.value!== null){
 						// check if the value match, margin 20% diff is accepted
-						if (Math.abs(other_item.value - myItem.value)> 120*.2 ){
-							// out of 20% range
+						if (Math.abs(other_item.value - myItem.value)> 120*tp_diff_percentage_accepted ){
+							// out of 10% range
 							alert("This item is repeated. Your answer this time is very different than the last time. Make sure to read each item carefully and be consistent.");
-							item.setAnswer(-1);
+							item.setAnswer(null);
 							item.applyAnswerToUI();
 							myItem.value = -1;
 						}
@@ -974,18 +977,23 @@ function generate_training_section(){
 */
 function generate_rating_section(){
 	acr_nav_tab = '<li class="nav-item {1}"><a class="nav-link" data-toggle="tab" href="#Q{0}-panel" id="Q{0}-tab" role="tab" aria-controls="Q{0}" {2}>Q. {0}</a></li>';
-	acr_tab ='<div class="tab-pane fade {2}" id="Q{0}-panel" role="tabpanel" aria-labelledby="q{0}-tab"> <p></p> <div class="row"> <div class="col-sm-3"></div> <div class="col-sm-6"> <p style="margin-top:10px;">{0}. How do you rate the <b>overall quality</b> of the following speech sample? </p> <p align="center"> <span class="baudio" id="q{0}" data-onfinished="playedAudioQ" data-src="{1}" >&nbsp;</span> </p> <fieldset id="fieldset_q{0}" title=""> <table class="table md scale" cellspacing="0" cellpadding="0"> <thead> <tr><th >Quality of the speech</th><th class="c" >Score</th></tr> </thead> <tbody> <tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="5">Excellent</label></div></td><td class="c">5</td></tr> <tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="4">Good</label></div></td><td class="c">4</td></tr> <tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="3">Fair</label></div></td><td class="c">3</td></tr> <tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="2">Poor</label></div></td><td class="c">2</td></tr> <tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="1"required="">Bad</label></div></td><td class="c">1</td></tr> </tbody> </table> </fieldset> <p></p> </div> <div class="col-sm-3"></div> </div> <p></p> </div>';
+	acr_tab ='<div class="tab-pane fade {2}" id="Q{0}-panel" role="tabpanel" aria-labelledby="q{0}-tab"> <p></p> <div class="row"> <div class="col-sm-1"></div> <div class="col-sm-10"> <p style="margin-top:10px;text-align: center;">{0}. Listen to the following speech file, and specify <b>your impression of the voice</b> on below scales?</p> <p align="center"> <span class="baudio" id="q{0}" data-onfinished="playedAudioQ" data-src="{1}" >&nbsp;</span> </p> <div id="fragebogen_screen_rating_{0}"></div> <p></p>  </div> <div class="col-sm-1"></div>';
+
 	// this will show which url was shown by in which question as their orther will be randomized
-
-
 	input_template= '<input id="Q{0}_URL" name="Q{0}_URL" type="hidden" value="{1}" />';
+	input_template_ans= '<input id="Q{0}_{1}" name="Q{0}_{1}" value="-1" />';
+
+	// randomly select and add a TP question
+	prepare_tp_for_attribution();
+
+	// set the order of questions
 	if (JSON.parse(config['randomizeRatingQuestions'])){
 		urls = shuffle(config['questionUrls']);
 	}else{
 		urls = config['questionUrls'];
 	}
-
 	var i;
+
 	for (i = 0; i < urls.length; i++) {
 		if (i==0){
 			$('#nav-tab-ul').append(acr_nav_tab.f(i+1,'active', 'ria-selected="true"'));
@@ -995,12 +1003,89 @@ function generate_rating_section(){
 			$('#nav-tabContent-rating').append(acr_tab.f(i+1, urls[i],''));
 		}
 		$('#nav-tabContent-rating').append(input_template.f(i+1,urls[i]));
-	}
-	$('.question_number').html(urls.length);
 
+
+		screen_element = document.getElementById("fragebogen_screen_rating_{0}".f(i+1));
+		var questionnaireItems = [];
+		for (j = 0; j < attribution_scales.length; j++) {
+			item_name = "Q{0}_{1}".f(i+1, attribution_scales[j].item_code);
+			item = new QuestionnaireItemSVGVisualAnalogueScale("max-width "+item_name, "", false, attribution_scales[j].left_label, attribution_scales[j].right_label);
+			screen_element.appendChild(item.createUI());
+			$("#thefragebogen_hidden_inputs".f(i+1)).append(input_template_ans.f(i+1, attribution_scales[j].item_code));
+            item.setEnabled(true);
+			f = function (item) {
+				if (item.getAnswer()==null)
+					return;
+				let item_name = item.className.split(" ")[1];
+				console.log("item_name:"+ item_name);
+				myItem = document.getElementById(item_name);
+				oldValue=myItem.value;
+				myItem.value = item.getAnswer();
+				if (myItem.value==-1){
+					return;
+				}
+				if (item_name.endsWith("_TP") || item_name.includes(tp_item_code)){
+					question_name = item_name.split("_")[0];
+					if (item_name.endsWith("TP"))
+						other_item = document.getElementById(question_name+"_"+tp_item_code);
+					else
+					    other_item = document.getElementById(question_name+"_TP");
+					console.log ("other item value:"+ other_item.value )
+					if (other_item.value !=- 1 &&  other_item.value!== null){
+						tp_correct = 1;
+						if (Math.abs(other_item.value - myItem.value)> 120*tp_diff_percentage_accepted ){
+							tp_correct = 0;
+						}
+						tp_check_holder = document.getElementById("tp_check");
+						tp_check_holder.value = tp_correct;
+
+					}
+				}
+			};
+			item.setOnReadyStateChangedCallback(f);
+            questionnaireItems.push(item);
+		}
+	}
+
+	$('.question_number').html(urls.length);
+	//trainingStimulusPlayed = new Array(urls.length).fill(0);
 }
 
 </script>
+
+
+<script type="text/javascript">
+		var msg_which_questions_to_be_answered="";
+		function submitButtonState()
+		{
+			// search for submit button
+			btn = document.getElementById('submitButton');
+
+			if (btn != null)
+			{
+				btn.disabled=true;
+				answered = true;
+  				$("#thefragebogen_hidden_inputs :input").each(function() {
+  					if ($( this ).val() ==-1){
+  						answered = false;
+  						console.log($( this ).attr('id'))
+  					}
+				});
+
+				if (answered){
+					msg_which_questions_to_be_answered = "None";
+				}
+				<!-- if all items are answered, enable the submit button -->
+				btn.disabled = !answered;
+			}
+		}
+
+		<!-- check answers every second (started on page load) -->
+		$(function() {
+			setInterval(submitButtonState, 1000);
+		});
+</script></p>
+
 
 <!--    Error -->
 <section class="container" id="errorSection" hidden>
@@ -1409,7 +1494,7 @@ function generate_rating_section(){
 			</div>
 			<div  class="panel-collapse collapse in" id="trainingS">
 				<div class="panel-body">
-				<p> Please answer the following <b class="question_number_training"> 0 </b> questions. For each question, please listen to the audio sample and give your opinion about the quality of the speech you hear on the following scale. <b>Note</b> that the scale will be activated when the speech sample played until the end. In case you hear an interruption message, please follow the instruction given in the message.</p>
+				<p> Please answer the following <b class="question_number_training"> 0 </b> questions. For each question, please listen to the audio sample and give your opinion about the voice you hear on the following scales.</p>
 				<p> There is no right or wrong answer as long as you listen to the audio files and give your opinion.</p>
 
  				<!-- will be generated -->
@@ -1445,6 +1530,7 @@ function generate_rating_section(){
 
 <input id="time_page_hidden_sec" name="time_page_hidden_sec" type="hidden" value="0" />
 <input id="any_parallel_session" name="any_parallel_session" type="hidden" value="false" />
+
 <!--- Rating task -->
 <section class="container" id="rating_section">
 		<div class="panel panel-primary">
@@ -1453,7 +1539,7 @@ function generate_rating_section(){
 			</div>
 			<div class="panel-body">
 				<div id="placeholder"> </div>
-				<p> Please answer the following <b class="question_number"> 0 </b> questions. For each question, please listen to the audio sample and give your opinion about the quality of the speech you hear on the following scale. <b>Note</b> that the scale will be activated when the speech sample played until the end. In case you hear an interruption message, please follow the instruction given in the message.</p>
+				<p> Please answer the following <b class="question_number"> 0 </b> questions. For each question, please listen to the audio sample and give your opinion about the voice you hear on the following scales.</p>
 				<p> There is no right or wrong answer as long as you listen to the audio files and give your opinion.</p>
 
  				<!-- will be generated -->
@@ -1498,4 +1584,5 @@ function generate_rating_section(){
 			</div>
 </section>
 
-
+<section class="container" id="thefragebogen_hidden_inputs" hidden>
+</section>
