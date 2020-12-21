@@ -33,13 +33,12 @@ body{font-family:Tahoma,"Times New Roman", Times, serif;}
 .baudio .baudio_table{display: inline;}
 .baudio .bn{margin:10px;}
 .baudio td{text-align:center;}
-.baudio .blabel{margin-top:50px;font-size: 70%;	color: #636363;}
-.baudio .play_clip1 .clip1 {font-weight: bold; color: #000000;}
-.baudio .play_clip2 .clip2 {font-weight: bold; color: #000000;}
-.baudio .play_clip1 .clip2 {color: #838383; font-weight: normal; font-size: 90%;}
-.baudio .play_clip2 .clip1 {color: #838383; font-weight: normal; font-size: 90%;}
-
-.baudio .title {font-size: 80%;}
+.baudio .blabel{margin-top:50px; font-size: 70%; color: #636363;}
+.baudio .play_clip1 .clip1 {font-weight: bold; color: #000000; font-size: 110%;}
+.baudio .play_clip2 .clip2 {font-weight: bold; color: #000000; font-size: 110%;}
+.baudio .play_clip1 .clip2 {color: #838383; font-weight: normal; }
+.baudio .play_clip2 .clip1 {color: #838383; font-weight: normal; }
+.baudio .title {font-size: 72%; color: #838383;}
 
 .scale {font-size: 100%;}
 .scale td { text-align: left; padding:0;}
@@ -1095,7 +1094,7 @@ function generate_training_section(){
 	ccr_nav_tab = '<li class="nav-item {1}"><a class="nav-link " data-toggle="tab"  href="#T{0}-panel" id="T{0}-tab " role="tab" aria-controls="T{0}" {2}>Q. {0}</a></li>';
 	ccr_tab ='<div class="tab-pane fade {3}" id="T{0}-panel" role="tabpanel" aria-labelledby="T{0}-tab"><p></p><div class="row">	<div class="col-sm-3"></div>	<div class="col-sm-6">		<p style="margin-top:10px;">{0}. The quality of the <b>second clip</b> compared to the quality of the <b>first clip</b> is: </p> <div class="row"> <p align="center"> <span class="baudio multi" id="t_{0}" data-src1="{1}" data-src2="{2}" data-title1 = "First clip" data-title2 = "Second clip" data-onfinished="playedAudioTraining"></span> </p> </div>  <fieldset id="fieldset_t{0}" class="trainingFieldset" title=""><table class="table md scale" cellspacing="0" cellpadding="0">			<thead><tr><th >Quality of the second clip is</th><th class="c" >Score</th></tr>			</thead>			<tbody><tr><td><div class="radio" ><label ><input type="radio" name="t{0}" value="{4}3">Much Better</label></div></td><td class="c">3</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="t{0}" value="{4}2">Better</label></div></td><td class="c">2</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="t{0}" value="{4}1">Slightly Better</label></div></td><td class="c">1</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="t{0}" value="0">About the Same</label></div></td><td class="c">0</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="t{0}" value="{5}1"required="">Slightly Worse</label></div></td><td class="c">-1</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="t{0}" value="{5}2"required="">Worse</label></div></td><td class="c">-2</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="t{0}" value="{5}3"required="">Much Worse</label></div></td><td class="c">-3</td></tr></tbody></table>		</fieldset><p></p> </div> 	<div class="col-sm-3"></div></div> <p></p> </div>';
 	// this will show which url was shown by in which question as their orther will be randomized
-	input_template= '<input id="T{0}_URL" name="T{0}_URL" type="hidden" value="{1}" />';
+	input_template= '<input id="T{0}_URL" name="T{0}_URL" type="hidden" value="{1}" /><input id="T{0}_order" name="T{0}_order" type="hidden" value="{2}" />';
 
     if (JSON.parse(config['randomizeTrainingQuestions']))
 		urls = shuffle(config['trainingUrls']);
@@ -1103,7 +1102,7 @@ function generate_training_section(){
 		urls = config['trainingUrls'];
 
 	var i;
-	var urlA,urlB,signA, signB;
+	var urlA,urlB,signA, signB, order;
 	for (i = 0; i < urls.length; i++) {
 		let r = Math.random();
 		if (r>0.5){
@@ -1111,12 +1110,14 @@ function generate_training_section(){
 			urlB = urls[i].processed;
 			signA = '';
 			signB = '-';
+			order = 'rp';
 		}else{
 			//processed ,unprocessed => sign should be replaced
 			urlA = urls[i].processed;
 			urlB = urls[i].ref;
 			signA = '-';
 			signB = '';
+			order = 'pr';
 		}
 		if (i==0){
 			$('#trainingTabs').append(ccr_nav_tab.f(i+1,'active', 'ria-selected="true"'));
@@ -1125,7 +1126,7 @@ function generate_training_section(){
 			$('#trainingTabs').append(ccr_nav_tab.f(i+1,'',''));
 			$('#nav-tabContent').append(ccr_tab.f(i+1, urlA, urlB,'', signA, signB));
 		}
-		$('#av-tabContent').append(input_template.f(i+1, urls[i].processed));
+		$('#av-tabContent').append(input_template.f(i+1, urls[i].processed, order));
 	}
 
 	trainingStimulusPlayed = new Array(urls.length).fill(0);
@@ -1138,7 +1139,7 @@ function generate_rating_section(){
 	ccr_nav_tab = '<li class="nav-item {1}"><a class="nav-link" data-toggle="tab" href="#Q{0}-panel" id="Q{0}-tab" role="tab" aria-controls="Q{0}" {2}>Q. {0}</a></li>';
 	ccr_tab ='<div class="tab-pane fade {3}" id="Q{0}-panel" role="tabpanel" aria-labelledby="q{0}-tab"><p></p><div class="row">	<div class="col-sm-3"></div>	<div class="col-sm-6">		<p style="margin-top:10px;">{0}. The quality of the <b>second clip</b> compared to the quality of the <b>first clip</b> is: </p> <div class="row"> <p align="center">  <span class="baudio multi" id="q_{0}" data-src1="{1}" data-src2="{2}" data-title1 = "First clip" data-title2 = "Second clip" data-onfinished="playedAudioQ" ></span>  </p></div> <fieldset id="fieldset_q{0}"  title=""><table class="table md scale" cellspacing="0" cellpadding="0">			<thead><tr><th >Quality of the second clip is</th><th class="c" >Score</th></tr>			</thead>			<tbody><tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="{4}3">Much Better</label></div></td><td class="c">3</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="{4}2">Better</label></div></td><td class="c">2</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="{4}1">Slightly Better</label></div></td><td class="c">1</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="0">About the Same</label></div></td><td class="c">0</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="{5}1"required="">Slightly Worse</label></div></td><td class="c">-1</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="{5}2"required="">Worse</label></div></td><td class="c">-2</td></tr><tr><td><div class="radio" ><label ><input type="radio" name="q{0}" value="{5}3"required="">Much Worse</label></div></td><td class="c">-3</td></tr></tbody></table>		</fieldset><p></p> </div> 	<div class="col-sm-3"></div></div> <p></p> </div>';
 	// this will show which url was shown by in which question as their orther will be randomized
-	input_template= '<input id="Q{0}_URL" name="Q{0}_URL" type="hidden" value="{1}" />';
+	input_template= '<input id="Q{0}_URL" name="Q{0}_URL" type="hidden" value="{1}" /> <input id="Q{0}_order" name="Q{0}_order" type="hidden" value="{2}" />';
 	if (JSON.parse(config['randomizeRatingQuestions'])){
 		urls = shuffle(config['questionUrls']);
 	}else{
@@ -1146,7 +1147,7 @@ function generate_rating_section(){
 	}
 
 	var i;
-	var urlA,urlB,signA, signB;
+	var urlA,urlB,signA, signB, order;
 	for (i = 0; i < urls.length; i++) {
 		let r = Math.random();
 		if (r>0.5){
@@ -1154,12 +1155,14 @@ function generate_rating_section(){
 			urlB = urls[i].processed;
 			signA = '';
 			signB = '-';
+			order = 'rp';
 		}else{
 			//processed ,unprocessed => sign should be replaced
 			urlA = urls[i].processed;
 			urlB = urls[i].ref;
 			signA = '-';
 			signB = '';
+			order = 'pr';
 		}
 		if (i==0){
 			$('#nav-tab-ul').append(ccr_nav_tab.f(i+1,'active', 'ria-selected="true"'));
@@ -1168,7 +1171,7 @@ function generate_rating_section(){
 			$('#nav-tab-ul').append(ccr_nav_tab.f(i+1,'',''));
 			$('#nav-tabContent-rating').append(ccr_tab.f(i+1,  urlA, urlB,'', signA, signB));
 		}
-		$('#nav-tabContent-rating').append(input_template.f(i+1,urls[i].processed));
+		$('#nav-tabContent-rating').append(input_template.f(i+1,urls[i].processed, order));
 	}
 }
 </script>
@@ -1181,30 +1184,6 @@ function generate_rating_section(){
 		<p><b> Meanwhile, please return this HIT and try another one</b>.</p>
 	</div>
 </section>
-
-
-<section class="container" id="SurveyTEST">
-	<div class="panel panel-primary">
-		<div class="panel-heading">
-			<h3 class="panel-title">
-				<a data-target="#instruction" data-toggle="collapse" >Instructions for speech quality assessment</a>
-			</h3>
-		</div>
-		<div  class="panel-collapse collapse in" id="test">
-			  <div class="panel-body" >
-			  <b>Test</b>
-				<p>Double audion test</p>
-				<p align="center"> <span class="baudio multi" id="test1" data-src1="https://sup23exp2.s3.amazonaws.com/ref/E_F01S01.wav"
-				data-src2="https://sup23exp2.s3.amazonaws.com/deg/EE2F6F31.wav"
-				data-title1 = "Clip 1" data-title2 = "Clip 2"
-				>&nbsp;</span> </p>
-
-			</div>
-		</div>
-
-	</div>
-</section>
-
 
 <!-- Instructions -->
 <section class="container" id="Survey">
