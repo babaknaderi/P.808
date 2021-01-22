@@ -178,7 +178,6 @@ $(function() {
 		// for qualification section
 		initializeQualification();
 		initializeActivePageMonitoring();
-		initialPageChangeListenbers();
 	}catch(err){
 		console.error(err);
 		recordError(err.name,err.message);
@@ -190,16 +189,6 @@ var overAllHiddenTime = 0;
 var startHiddenDate = null;
 var sessionId = null;
 var sessionIdVariableName=null;
-
-/**
-	stop audio playing when tab is changed,
-**/
-function initialPageChangeListenbers(){
-	$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-		pauseAll();
-	});
-}
-
 /**
 	monitor and record the status of page including being focus, and active time
 
@@ -564,14 +553,12 @@ var trainingStimulusPlayed;
   config.forceRetrainingInHours
 */
 function playedAudioTraining(id){
-	console.log("*** playedAudioTraining ***")
 	// parallel session check
 	isAnyParallelSession();
 	$('input[name="'+id+'"]').off('change');
 	trainingQuestionNumber= id.substring(1);
 	eval("trainingStimulusPlayed["+trainingQuestionNumber+"-1]=1;");
-	console.log(trainingStimulusPlayed.reduce(getSum, 0));
-	console.log("len:"+trainingStimulusPlayed.length);
+	console.log(trainingStimulusPlayed.reduce(getSum, 0))
 	if (trainingStimulusPlayed.reduce(getSum, 0) ==  trainingStimulusPlayed.length){
 		createCookie(config['cookieName']+"_training","un_important",config['forceRetrainingInHours']*60);
 	}
@@ -665,22 +652,19 @@ $(function() {
 		titleTextTemplate='<tr><td>{1}</td></tr>';
 		insert='';
 		title='';
-		loop =''
-		a='<audio id="audio_{0}" preload="true" {2}><source src="{1}" type="audio/wav"> </audio>'+
+		a='<audio id="audio_{0}" preload="true"><source src="{1}" type="audio/wav"> </audio>'+
 		'<input type="hidden" id="audio_n_play_{0}" name="audio_n_play_{0}" value="0">'+
 		'<input type="hidden" id="audio_n_finish_{0}" name="audio_n_finish_{0}" value="0">';
 		if ($(this).attr('title')){
 			insert=titleTextTemplate;
 			title=$(this).attr('title');
 		}
-		if ($(this).attr('loop'))
-			loop = 'loop';
 
 		t='<table class="baudio_table" border="0">'+insert+' <tr><td><button id="baudio_{0}" type="button" class="btn bn disabled"><span id ="baudio_s_{0}" class="glyphicon glyphicon-play"></span></button></td></tr><tr><td><span id="baudio_l_c_{0}" class="blabel" >00:00</span><span id="baudio_l_d_{0}" class="blabel" > / 00:00</span></td></tr></table>';
 		src=$(this).attr('data-src');
 		id=$(this).attr('id');
 
-		$(this).append(a.f(id,src, loop));
+		$(this).append(a.f(id,src));
 		$(this).append(t.f(id,title));
 		var audioElement = document.getElementById("audio_"+id);
 		//save for later
@@ -866,12 +850,11 @@ function shuffle(a) {
 <script>
 
 	// attribution
-	var attribution_scales =
+/*	var attribution_scales =
 	[ {item_code : "RELA", left_label:"Relaxed", right_label:"Not relaxed"},
 	  {item_code : "CONF", left_label:"Confident", right_label:"Not confident"}
 	];
-
-/*
+*/
 	var attribution_scales =
 	[ {item_code : "RELA", left_label:"Relaxed", right_label:"Not relaxed"},
 	  {item_code : "CONF", left_label:"Confident", right_label:"Not confident"},
@@ -889,7 +872,7 @@ function shuffle(a) {
 	  {item_code : "KIND", left_label:"Kind", right_label:"Unkind"},
 	  {item_code : "EXTR", left_label:"Extrovert", right_label:"Introvert"}
 	];
-*/
+
 	var tp_diff_percentage_accepted= 0.1;
 	var tp_item_code ="";
 	var store_tp_item_code= '<input id="TP_ITEM_CODE" name="TP_ITEM_CODE"  type="hidden" value="{0}" />';
@@ -913,7 +896,7 @@ function shuffle(a) {
 */
 function generate_training_section(){
 	acr_nav_tab = '<li class="nav-item {1}"><a class="nav-link " data-toggle="tab"  href="#T{0}-panel" id="T{0}-tab " role="tab" aria-controls="T{0}" {2}>Q. {0}</a></li>';
-	acr_tab ='<div class="tab-pane fade {2}" id="T{0}-panel" role="tabpanel" aria-labelledby="T{0}-tab"> <p></p> <div class="row">	<div class="col-sm-1"></div>	<div class="col-sm-10">		<p style="margin-top:10px;text-align: center;">{0}. Listen to the following speech file, and specify <b>your impression of the voice</b> on below scales? </p><p align="center"> <span class="baudio" id="t{0}" data-onfinished="playedAudioTraining" data-src="{1}" loop>&nbsp;</span> </p> <div id="fragebogen_screen_training_{0}"></div> <p></p> </div> 	<div class="col-sm-1"></div></div> <p></p> </div>';
+	acr_tab ='<div class="tab-pane fade {2}" id="T{0}-panel" role="tabpanel" aria-labelledby="T{0}-tab"> <p></p> <div class="row">	<div class="col-sm-1"></div>	<div class="col-sm-10">		<p style="margin-top:10px;text-align: center;">{0}. Listen to the following speech file, and specify <b>your impression of the voice</b> on below scales? </p><p align="center"> <span class="baudio" id="t{0}" data-onfinished="playedAudioTraining" data-src="{1}" >&nbsp;</span> </p> <div id="fragebogen_screen_training_{0}"></div> <p></p> </div> 	<div class="col-sm-1"></div></div> <p></p> </div>';
 	// this will show which url was shown by in which question as their orther will be randomized
 	input_template= '<input id="T{0}_URL" name="T{0}_URL" type="hidden" value="{1}" />';
 	input_template_ans= '<input id="T{0}_{1}" name="T{0}_{1}"  type="hidden" value="-1" />';
@@ -994,7 +977,7 @@ function generate_training_section(){
 */
 function generate_rating_section(){
 	acr_nav_tab = '<li class="nav-item {1}"><a class="nav-link" data-toggle="tab" href="#Q{0}-panel" id="Q{0}-tab" role="tab" aria-controls="Q{0}" {2}>Q. {0}</a></li>';
-	acr_tab ='<div class="tab-pane fade {2}" id="Q{0}-panel" role="tabpanel" aria-labelledby="q{0}-tab"> <p></p> <div class="row"> <div class="col-sm-1"></div> <div class="col-sm-10"> <p style="margin-top:10px;text-align: center;">{0}. Listen to the following speech file, and specify <b>your impression of the voice</b> on below scales?</p> <p align="center"> <span class="baudio" id="q{0}" data-onfinished="playedAudioQ" data-src="{1}" loop >&nbsp;</span> </p> <div id="fragebogen_screen_rating_{0}"></div> <p></p>  </div> <div class="col-sm-1"></div>';
+	acr_tab ='<div class="tab-pane fade {2}" id="Q{0}-panel" role="tabpanel" aria-labelledby="q{0}-tab"> <p></p> <div class="row"> <div class="col-sm-1"></div> <div class="col-sm-10"> <p style="margin-top:10px;text-align: center;">{0}. Listen to the following speech file, and specify <b>your impression of the voice</b> on below scales?</p> <p align="center"> <span class="baudio" id="q{0}" data-onfinished="playedAudioQ" data-src="{1}" >&nbsp;</span> </p> <div id="fragebogen_screen_rating_{0}"></div> <p></p>  </div> <div class="col-sm-1"></div>';
 
 	// this will show which url was shown by in which question as their orther will be randomized
 	input_template= '<input id="Q{0}_URL" name="Q{0}_URL" type="hidden" value="{1}" />';
@@ -1075,18 +1058,11 @@ function generate_rating_section(){
 		var msg_which_questions_to_be_answered="";
 		function submitButtonState()
 		{
-
-
-
-
 			// search for submit button
 			btn = document.getElementById('submitButton');
 
 			if (btn != null)
 			{
-				// check if the first audion is played.
-
-
 				btn.disabled=true;
 				answered = true;
   				$("#thefragebogen_hidden_inputs :input").each(function() {
@@ -1101,10 +1077,6 @@ function generate_rating_section(){
 				}
 				<!-- if all items are answered, enable the submit button -->
 				btn.disabled = !answered;
-				if (parseInt($("#audio_n_play_t1").val())>0){
-					createCookie(config['cookieName']+"_training","un_important",config['forceRetrainingInHours']*60);
-					console.log("training is played");
-				}
 			}
 		}
 
@@ -1129,7 +1101,7 @@ function generate_rating_section(){
 	<div class="panel panel-primary">
 		<div class="panel-heading">
 			<h3 class="panel-title">
-				<a data-target="#instruction" data-toggle="collapse" >Instructions for the assessment of speech perception</a>
+				<a data-target="#instruction" data-toggle="collapse" >Instructions for speech quality assessment</a>
 			</h3>
 		</div>
 		<div  class="panel-collapse collapse in" id="instruction">
@@ -1139,14 +1111,14 @@ function generate_rating_section(){
 
 				<img src="https://audiosamplesp808.blob.core.windows.net/p808-assets/img/process_3.png" alt="scale" class="center" style='width: 60%' >
 
-				  <p>Welcome! You are about to participate in our experiment for the assessment of speech perception! This HIT has two + two (just every now and then) sections:</p>
+				  <p>Welcome! You are about to participate in our speech quality assessment experiment! This HIT has two + two (just every now and then) sections:</p>
 				<ul>
 					<li><b>Qualification (just once):</b> Check if you are eligible to perform these HITs</li>
 					<li><b>Setup (every <b class="setup_time"> 0</b> minutes):</b> Configure your system and validate it by answering 6 questions</li>
 					<li><b>Training (every <b class="training_time"> 0 </b> hour):</b> <b class="question_number_training"> 0 </b> questions, same as "Ratings" but appears just once a day</li>
-					<li><b>Rating:</b> Listen to <b class="question_number"> 0 </b> audio files and give <b>your opinion about the social speaker characteristics of the speakers</b> you hear.</li>
+					<li><b>Rating:</b> Listen to <b class="question_number"> 0 </b> audio files and give <b>your opinion about the quality of the speech</b> you hear.</li>
 				</ul>
-				<p>Note that all of the speech in these audio files is in English.</p>
+				<p>Note that not all of the speech in these audio files is in English.</p>
 				<p>You should follow the below mentioned rules, otherwise your answers will be invalid.</p>
 				<p><b>Rules:</b></p>
 				<ul>
@@ -1522,9 +1494,8 @@ function generate_rating_section(){
 			</div>
 			<div  class="panel-collapse collapse in" id="trainingS">
 				<div class="panel-body">
-				<p> Please answer the following <b class="question_number_training"> 0 </b> questions. For each question, please listen to the audio sample and give your opinion about the voice you hear on the following scales. The speaker will read out some sentences.</p>
-				<p>You will find the positive adjective at the extreme left and a negative adjective at the extreme right of the scale. In order to provide your opinion you will have to click on the scale provided. You will find a cross (X) on the scale after you provide your opinion. You can listen to each audio sample multiple times during the test.</p>
-				<p> There is no right or wrong answer as long as you listen to the audio files and give your opinion. </p>
+				<p> Please answer the following <b class="question_number_training"> 0 </b> questions. For each question, please listen to the audio sample and give your opinion about the voice you hear on the following scales.</p>
+				<p> There is no right or wrong answer as long as you listen to the audio files and give your opinion.</p>
 
  				<!-- will be generated -->
 				<ul class="nav nav-tabs" role="tablist" id="trainingTabs">
@@ -1569,7 +1540,6 @@ function generate_rating_section(){
 			<div class="panel-body">
 				<div id="placeholder"> </div>
 				<p> Please answer the following <b class="question_number"> 0 </b> questions. For each question, please listen to the audio sample and give your opinion about the voice you hear on the following scales.</p>
-				<p>You will find the positive adjective at the extreme left and a negative adjective at the extreme right of the scale. In order to provide your opinion you will have to click on the scale provided. You will find a cross (X) on the scale after you provide your opinion. You can listen to each audio sample multiple times during the test.</p>
 				<p> There is no right or wrong answer as long as you listen to the audio files and give your opinion.</p>
 
  				<!-- will be generated -->
