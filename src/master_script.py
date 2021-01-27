@@ -359,11 +359,14 @@ async def create_hit_app_acr(cfg, template_path, out_path, training_path, trap_p
         trapclipsstore = TrappingSamplesInStore(cfg_trapping_store, 'TrappingQuestions')
         df_trap = await trapclipsstore.get_dataframe()
     # trapping clips are required, at list 1 clip should be available here
-    if len(df_trap.index) < 1 and int(cfg_g['number_of_clips_per_session']) > 0:
+    if int(cfg_g['number_of_trapping_per_session']) > 0 and len(df_trap.index) < 1 :
         raise (f"At least one trapping clip is required")
-    for index, row in df_trap.head(n=1).iterrows():
-        trap_url = row['trapping_clips']
-        trap_ans = row['trapping_ans']
+    trap_url = ""
+    trap_ans = ""
+    if int(cfg_g['number_of_trapping_per_session']) > 0:
+        for index, row in df_trap.head(n=1).iterrows():
+            trap_url = row['trapping_clips']
+            trap_ans = row['trapping_ans']
 
     config = {}
     config['cookie_name'] = cfg['cookie_name']
@@ -637,7 +640,7 @@ async def main(cfg, test_method, args):
     # check assets
     general_path = os.path.join(os.path.dirname(__file__), 'assets_master_script/general.csv')
     #   for acr
-    acr_template_path = os.path.join(os.path.dirname(__file__), 'P808Template/ACR_template.html')
+    acr_template_path = os.path.join(os.path.dirname(__file__), 'P808Template/Attribution_template.html')
     acr_cfg_template_path = os.path.join(os.path.dirname(__file__),
                                          'assets_master_script/acr_result_parser_template.cfg')
     #   for dcr

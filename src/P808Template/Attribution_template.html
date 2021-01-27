@@ -83,11 +83,8 @@ var config ={
     forceRetrainingInHours:1,
     showSetupEveryMinutes:30,
     debug:"true",
-
-    questionUrls: ['https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c01_ef03_s001.wav',
-    'https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c04_em02_s002.wav'],
-
-    trainingUrls: ['https://s3-us-west-1.amazonaws.com/itutest.qu.tuberlin.de/401/D401_c24_ef03_s001.wav'],
+    questionUrls: {{cfg.rating_urls}},
+    trainingUrls: {{cfg.training_urls}},
 
     knownQuestionInTrainingUrl:"{{cfg.training_trap_urls}}",
     knownQuestionInTrainingAns: "{{cfg.training_trap_ans}}",
@@ -97,7 +94,7 @@ var config ={
     goldClipAns:"${gold_clips_ans}",
     randomizeTrainingQuestions:"true",
     randomizeRatingQuestions:"true",
-    allowedMaxHITsInProject:20,
+    allowedMaxHITsInProject:{{cfg.allowed_max_hit_in_project}},
 	allowedMaxContinuesSessionDurationInMinutes:45,
 	qualification:{
 		mother_tongue: ["english","en"],
@@ -866,12 +863,13 @@ function shuffle(a) {
 <script>
 
 	// attribution
+/*
 	var attribution_scales =
 	[ {item_code : "RELA", left_label:"Relaxed", right_label:"Not relaxed"},
 	  {item_code : "CONF", left_label:"Confident", right_label:"Not confident"}
 	];
 
-/*
+*/
 	var attribution_scales =
 	[ {item_code : "RELA", left_label:"Relaxed", right_label:"Not relaxed"},
 	  {item_code : "CONF", left_label:"Confident", right_label:"Not confident"},
@@ -889,7 +887,7 @@ function shuffle(a) {
 	  {item_code : "KIND", left_label:"Kind", right_label:"Unkind"},
 	  {item_code : "EXTR", left_label:"Extrovert", right_label:"Introvert"}
 	];
-*/
+
 	var tp_diff_percentage_accepted= 0.1;
 	var tp_item_code ="";
 	var store_tp_item_code= '<input id="TP_ITEM_CODE" name="TP_ITEM_CODE"  type="hidden" value="{0}" />';
@@ -947,7 +945,7 @@ function generate_training_section(){
 			item_name = "T{0}_{1}".f(i+1, attribution_scales[j].item_code);
 			item = new QuestionnaireItemSVGVisualAnalogueScale("max-width "+item_name, "", false, attribution_scales[j].left_label, attribution_scales[j].right_label);
 			screen_element.appendChild(item.createUI());
-			$("#thefragebogen_hidden_inputs".f(i+1)).append(input_template_ans.f(i+1, attribution_scales[j].item_code));
+			$("#thefragebogen_hidden_inputs_training".f(i+1)).append(input_template_ans.f(i+1, attribution_scales[j].item_code));
             item.setEnabled(true);
 
 			f = function (item) {
@@ -1075,18 +1073,12 @@ function generate_rating_section(){
 		var msg_which_questions_to_be_answered="";
 		function submitButtonState()
 		{
-
-
-
-
 			// search for submit button
 			btn = document.getElementById('submitButton');
 
 			if (btn != null)
 			{
 				// check if the first audion is played.
-
-
 				btn.disabled=true;
 				answered = true;
   				$("#thefragebogen_hidden_inputs :input").each(function() {
@@ -1095,6 +1087,15 @@ function generate_rating_section(){
   						console.log($( this ).attr('id'))
   					}
 				});
+
+				if (!readCookie(config['cookieName']+"_training")){
+					$("#thefragebogen_hidden_inputs_training :input").each(function() {
+  						if ($( this ).val() ==-1){
+  							answered = false;
+  							console.log($( this ).attr('id'))
+	  					}
+					});
+				}
 
 				if (answered){
 					msg_which_questions_to_be_answered = "None";
@@ -1615,4 +1616,6 @@ function generate_rating_section(){
 </section>
 
 <section class="container" id="thefragebogen_hidden_inputs" hidden>
+</section>
+<section class="container" id="thefragebogen_hidden_inputs_training" hidden>
 </section>
