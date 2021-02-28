@@ -45,7 +45,7 @@ def outliers_modified_z_score(votes):
     x = np.array(modified_z_scores)
     v = np.array(votes)
     v = v[(x < threshold)]
-    return v
+    return v.tolist()
 
 
 def outliers_z_score(votes):
